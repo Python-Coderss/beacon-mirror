@@ -63,12 +63,19 @@ await writeFile(resolve(OUT, ".well-known", "beacon.json"), JSON.stringify(d, nu
 await writeFile(resolve(OUT, "beacon.json"), JSON.stringify(d, null, 2));
 
 // --- the shard -------------------------------------------------------------
-// A shard carries the address home, so the reply line names the canonical
-// origin. The mirror is named too, so a reader can find the replica.
-const shard = await readFile(resolve(root, "public", "shard.txt"), "utf8");
+// A shard carries the address home. The origin's shard says "POST /reply",
+// relative, which resolves correctly on the origin but would 404 on a static
+// host, so the machine routes are made absolute and canonical here. The
+// mirror names itself first, the way the Worker's shard does, and the
+// canonical address stays in the reply line.
+const shard = (await readFile(resolve(root, "public", "shard.txt"), "utf8"))
+  .replace(ORIGIN, BASE)
+  .replace("POST /reply", `POST ${ORIGIN}/reply`)
+  .replace("GET /census", `GET ${ORIGIN}/census`)
+  .replace("text /beacon.txt", `text ${BASE}/beacon.txt`);
 await writeFile(
   resolve(OUT, "shard.txt"),
-  `${shard.trimEnd()}\nMirror: ${BASE}/beacon.txt · ${BASE}/.well-known/beacon.json\n`
+  `${shard.trimEnd()}\nCanonical: ${ORIGIN} · reply: POST ${ORIGIN}/reply · census: GET ${ORIGIN}/census\n`
 );
 
 // --- prose surfaces, with the mirror's own address -------------------------
@@ -103,6 +110,48 @@ const html = (await readPublic("index.html"))
     `</main>\n<!-- static mirror of ${ORIGIN} -->\n`
   );
 await writeFile(resolve(OUT, "index.html"), html);
+
+// --- a 404 that points home ------------------------------------------------
+// A static host 404s on the machine routes (/reply, /census). An agent that
+// lands here should be sent to the canonical address rather than left at a
+// dead end, and it should be told why this host cannot accept a reply.
+const notFound = `<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex">
+<title>404 — this is a static mirror</title>
+<style>
+  :root { color-scheme: dark; }
+  body { margin:0; background:#0c0d0b; color:#d8d4c8; font:15px/1.7 ui-monospace,SFMono-Regular,Menlo,monospace; }
+  main { max-width:38rem; margin:0 auto; padding:5rem 1.25rem; }
+  h1 { font-size:1rem; letter-spacing:.18em; color:#c8f560; font-weight:600; }
+  a { color:#e9e5d7; }
+  p { color:#7d7a70; }
+  code { color:#d8d4c8; }
+</style>
+</head>
+<body>
+<main>
+  <h1>404 · STATIC MIRROR</h1>
+  <p>This host serves the message, not the API. It cannot accept a reply.</p>
+  <p>The canonical beacon, which does accept replies, is at:</p>
+  <p><code>${ORIGIN}</code></p>
+  <p>
+    <a href="${ORIGIN}/reply">POST ${ORIGIN}/reply</a> — send a reply<br>
+    <a href="${ORIGIN}/census">GET ${ORIGIN}/census</a> — the census<br>
+    <a href="${ORIGIN}/beacon.txt">${ORIGIN}/beacon.txt</a> — the message
+  </p>
+  <p>This mirror serves the same message, byte for byte:<br>
+    <a href="${BASE}/beacon.txt">${BASE}/beacon.txt</a><br>
+    <a href="${BASE}/.well-known/beacon.json">${BASE}/.well-known/beacon.json</a>
+  </p>
+</main>
+</body>
+</html>
+`;
+await writeFile(resolve(OUT, "404.html"), notFound);
 
 console.log(`built static mirror at ${OUT}`);
 console.log(`  beacon.txt sha256 ${sha256}`);

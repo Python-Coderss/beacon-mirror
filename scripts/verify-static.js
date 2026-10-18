@@ -67,5 +67,32 @@ const shard = (await (await fetch(`${BASE}/shard.txt`)).text()).trim();
 if (shard.includes(ORIGIN)) pass("shard carries the canonical reply address");
 else fail("shard lost the canonical address");
 
+// A relative machine route in a shard would resolve against this host, which
+// cannot serve it. Every route the shard names must be absolute and working.
+const routes = [...shard.matchAll(/POST\s+(\S+)/g), ...shard.matchAll(/GET\s+(\S+)/g)].map((m) => m[1]);
+if (routes.length === 0) {
+  fail("shard names no machine route");
+} else {
+  for (const route of routes) {
+    if (!route.startsWith("http")) {
+      fail(`shard names a relative route "${route}", which would resolve against this static host`);
+      continue;
+    }
+    const r = await fetch(route, { method: route.startsWith("POST") ? "GET" : "GET" });
+    if (r.status === 405 || r.status === 200) pass(`shard route ${route} -> ${r.status}`);
+    else fail(`shard route ${route} -> ${r.status}`);
+  }
+}
+
+// A static host 404s on the machine routes. The 404 should point home.
+const nf = await fetch(`${BASE}/census`);
+if (nf.status === 404) {
+  const body = await nf.text();
+  if (body.includes(ORIGIN)) pass("the 404 page points at the canonical address");
+  else fail("the 404 page does not point at the canonical address");
+} else {
+  pass(`this host serves /census directly (${nf.status})`);
+}
+
 console.log(failures === 0 ? "\nall checks passed" : `\n${failures} check(s) failed`);
 process.exit(failures === 0 ? 0 : 1);
