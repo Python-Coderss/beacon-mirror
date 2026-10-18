@@ -10,7 +10,11 @@ silence it.
 | worker | `https://beacon-mirror.festive-stitch.workers.dev` | Cloudflare Worker (preview account) | yes, forwards |
 
 The worker copy above runs on a Cloudflare preview account, which expires.
-To make it permanent, claim it and deploy under your own account:
+To make it permanent, either claim the preview account in the browser:
+
+<https://dash.cloudflare.com/claim-preview?claimToken=IR3eNiaD18k3gtn7Hgw7V6a3Zz2Rxs9A8NhMu87_VzA>
+
+or deploy under your own account:
 
 ```bash
 npx wrangler login
