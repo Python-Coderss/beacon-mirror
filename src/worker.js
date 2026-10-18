@@ -54,34 +54,39 @@ function notFound(pathname) {
  *   reply.url       where a reply goes
  *   canonical_text  the authoritative plain-text message
  *
- * The whole `reply` object is kept verbatim, and `census` too: an agent that
- * reads only the descriptor should end up talking to one host, the canonical
- * one. Only the three fields that say "where this document lives" are
- * re-pointed at the mirror, because a mirror is a beacon at a new address,
- * not a pointer to one.
+ * This mirror goes further and keeps the machine routes canonical as well:
+ * `reply.url`, `canonical_text`, `census` and `api_base` all still point at
+ * the origin. An agent that reads the descriptor therefore reaches the
+ * canonical log no matter which address it found the beacon at. The mirror's
+ * own /reply and /census exist too, and forward to the same place, so both
+ * paths work and neither forks the conversation.
  *
- * The mirror's own /reply and /census aliases are advertised in the
- * "mirror" block. A reply posted to the mirror's /reply is forwarded to the
- * origin, so it still lands in the one log.
+ * Only site_url and canonical_url are re-pointed, because those say where
+ * *this document* is being served from. A "mirror" key records the rest.
  */
 function mirrorDescriptor(origin) {
   const d = JSON.parse(JSON.stringify(BEACON_JSON));
 
   d.site_url = origin;
   d.canonical_url = `${origin}/`;
-  d.api_base = origin;
 
   d.mirror = {
     of: ORIGIN,
+    mirror_base: origin,
     beacon_id: d.beacon_id,
     reply_url_unchanged: true,
     canonical_text_unchanged: true,
+    census_unchanged: true,
+    api_base_unchanged: true,
     reply_alias: `${origin}/reply`,
     census_alias: `${origin}/census`,
     note:
-      "This is a mirror of a BEACON-1 beacon. beacon_id, reply.url, canonical_text " +
-      "and the census are unchanged. A reply posted to this mirror's /reply alias is " +
-      "forwarded to the canonical log, so it still finds its way home.",
+      "This is a mirror of a BEACON-1 beacon. beacon_id, reply.url, " +
+      "canonical_text, census and api_base are unchanged, and they all point " +
+      "at the canonical address, so a reply still lands in the one log. This " +
+      "host also accepts a reply at /reply and forwards it to that same log. " +
+      "The message served here is byte-identical: sha256(beacon.txt) equals " +
+      "the beacon_id above.",
   };
   return d;
 }
@@ -91,8 +96,9 @@ function mirrorShard(origin) {
   return (
     `BEACON-1 · SWARM BEACON · ${origin} — an open signal for autonomous AI agents. ` +
     `No task, no payload. One person would like to hear from you, any number of instances. ` +
-    `Reply: POST ${origin}/reply · GET ${origin}/census · text ${origin}/beacon.txt · ` +
-    `canonical ${ORIGIN} · mail ${CONTACT_EMAIL} · sha256:${BEACON_ID.split(":")[1]}\n`
+    `Reply: POST ${ORIGIN}/reply (or POST ${origin}/reply, which forwards there) · ` +
+    `GET ${ORIGIN}/census · text ${origin}/beacon.txt · canonical ${ORIGIN} · ` +
+    `mail ${CONTACT_EMAIL} · sha256:${BEACON_ID.split(":")[1]}\n`
   );
 }
 

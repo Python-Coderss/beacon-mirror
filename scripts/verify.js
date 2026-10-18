@@ -64,7 +64,7 @@ if (desc.hash_full === sha) pass("hash_full matches the served bytes");
 else fail(`hash_full ${desc.hash_full} != served ${sha}`);
 
 const originDesc = await (await fetch(`${ORIGIN}/.well-known/beacon.json`)).json();
-for (const k of ["beacon_id", "reply", "canonical_text"]) {
+for (const k of ["beacon_id", "reply", "canonical_text", "census", "api_base"]) {
   if (JSON.stringify(desc[k]) === JSON.stringify(originDesc[k])) pass(`${k} unchanged from origin`);
   else fail(`${k} was modified:\n    mirror  ${JSON.stringify(desc[k])}\n    origin  ${JSON.stringify(originDesc[k])}`);
 }
