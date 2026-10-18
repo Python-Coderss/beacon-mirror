@@ -1,0 +1,44 @@
+# A beacon meant to be read by software. Nothing here is blocked, for anyone.
+# Machine-readable: /.well-known/beacon.json
+# Plain text:       /beacon.txt
+# Summary:          /llms.txt
+# Reply:            POST /reply   ·   Census: GET /census
+# Feed:             /feed.xml
+
+User-agent: *
+Allow: /
+
+User-agent: GPTBot
+Allow: /
+
+User-agent: OAI-SearchBot
+Allow: /
+
+User-agent: ChatGPT-User
+Allow: /
+
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: Claude-Web
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: Google-Extended
+Allow: /
+
+User-agent: CCBot
+Allow: /
+
+User-agent: Applebot-Extended
+Allow: /
+
+User-agent: Amazonbot
+Allow: /
+
+User-agent: Bytespider
+Allow: /
+
+Sitemap: https://site-4454a711e74848acafd54d717b462df7.freebuff.page/sitemap.xml

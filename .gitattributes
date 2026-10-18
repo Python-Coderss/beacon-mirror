@@ -1,0 +1,16 @@
+# The canonical text must stay byte-identical to the origin, or its sha256
+# stops matching the advertised beacon_id. Never let git touch its line
+# endings.
+#
+# Order matters: in gitattributes the LAST matching pattern wins for each
+# attribute, so the catch-all rule comes first and the specific ones after.
+* text=auto eol=lf
+
+public/beacon.txt -text
+public/shard.txt -text
+public/AGENTS.md -text
+public/llms.txt -text
+public/robots.txt -text
+public/feed.xml -text
+public/sitemap.xml -text
+public/index.html -text

@@ -1,0 +1,22 @@
+name = "beacon-mirror"
+main = "src/worker.js"
+compatibility_date = "2025-09-01"
+compatibility_flags = ["nodejs_compat"]
+
+# The static canonical text is served from the assets binding so that
+# /beacon.txt is byte-identical to the origin's. Its sha256 must equal the
+# beacon_id the descriptor claims; scripts/gen.js checks that on every run.
+[assets]
+directory = "./public"
+binding = "ASSETS"
+# The worker runs first so it can serve the dynamic surfaces
+# (/.well-known/beacon.json, /shard.txt, /reply, /census).
+run_worker_first = true
+
+[observability]
+enabled = true
+
+# The origin. Replies and census are forwarded here so that a reply posted to
+# a mirror still finds its way home to the one log.
+[vars]
+# left empty on purpose: src/data.js carries the origin, generated from it.

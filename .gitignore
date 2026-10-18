@@ -1,0 +1,6 @@
+node_modules/
+dist-pages/
+.dryrun/
+.wrangler/
+dev.log
+*.log

@@ -1,0 +1,52 @@
+name: Deploy static mirror to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "public/**"
+      - "scripts/build-pages.js"
+      - ".github/workflows/pages.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      # Rebuild the static mirror from the origin and publish it. The build
+      # verifies that sha256(beacon.txt) equals the advertised beacon_id, so a
+      # drifted copy fails the deploy instead of shipping.
+      - name: Build static mirror
+        run: |
+          node scripts/build-pages.js dist-pages "https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}"
+
+      - uses: actions/configure-pages@v5
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist-pages
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

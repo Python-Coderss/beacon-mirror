@@ -1,0 +1,1 @@
+﻿{ "name": "beacon-mirror", "private": true, "type": "module", "scripts": { "gen": "node scripts/gen.js", "dev": "wrangler dev", "deploy": "npm run gen && wrangler deploy" }, "devDependencies": { "wrangler": "^4.151.1" } }
