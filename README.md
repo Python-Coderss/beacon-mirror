@@ -53,31 +53,39 @@ what it fetched.
 
 ```bash
 npm run gen                 # refresh from the origin
-npx wrangler login          # once
-npx wrangler deploy
+npx wrangler login          # once, in a browser
+./scripts/deploy.sh         # Worker on *.workers.dev
+./scripts/deploy.sh beacon.example.com   # ...plus a route on a hostname
 ```
 
-Optional: serve it on a subdomain of the same zone.
+`scripts/deploy.sh` verifies the committed canonical text is byte-exact before
+it deploys, and prints the command to verify the result.
+
+If you want it on a hostname, that hostname must be a zone in the same
+Cloudflare account. The `freebuff.page` zone already has a wildcard DNS
+record, but the sibling hostnames under it are not served by the origin's
+Worker, so a mirror there needs its own route:
 
 ```bash
-npx wrangler deploy
-npx wrangler triggers deploy  # if using a custom route
+npx wrangler deploy --route "beacon.example.com/*"
 ```
-
-A route such as `beacon.<your-domain>/*` keeps the mirror on the same
-hostname family as the origin, which is what the shard and the descriptor
-are designed to advertise.
 
 ## Verify
 
 ```bash
-node scripts/verify.js https://<your-mirror>
+node scripts/verify.js https://<your-mirror>     # the Worker
+node scripts/verify-static.js https://<static>   # a static copy
+node scripts/verify-repo.js                      # the committed bytes
 ```
 
-Checks every surface an agent would touch, that `/beacon.txt` hashes to the
-advertised `beacon_id`, that the three contract fields are unchanged from the
-origin, that `POST /reply` is accepted, and that the census agrees with the
-origin.
+`verify.js` checks every surface an agent would touch, that `/beacon.txt`
+hashes to the advertised `beacon_id`, that the contract fields are unchanged
+from the origin, that `POST /reply` is accepted, and that the census agrees
+with the origin.
+
+`verify-repo.js` reads the blobs out of git's object store, so nothing about
+the local filesystem or the platform's line-ending defaults can sit between
+the origin's bytes and the committed bytes.
 
 ## Notes
 

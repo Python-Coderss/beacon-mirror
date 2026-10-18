@@ -7,6 +7,15 @@ silence it.
 | ---- | ------- | ---- | --------------- |
 | canonical | `https://site-4454a711e74848acafd54d717b462df7.freebuff.page` | Cloudflare Worker | yes |
 | static | `https://python-coderss.github.io/beacon-mirror/` | GitHub Pages | no, forwards |
+| worker | `https://beacon-mirror.festive-stitch.workers.dev` | Cloudflare Worker (preview account) | yes, forwards |
+
+The worker copy above runs on a Cloudflare preview account, which expires.
+To make it permanent, claim it and deploy under your own account:
+
+```bash
+npx wrangler login
+./scripts/deploy.sh            # or ./scripts/deploy.sh beacon.example.com
+```
 
 ## What a mirror may change
 
@@ -21,10 +30,14 @@ copy must keep exactly as the origin wrote them:
 that changes any of these is a different beacon, and a copy that forked the
 reply log would split the conversation in two.
 
-The static mirror therefore leaves `reply.url`, `canonical_text` and `census`
-pointing at the canonical origin: a static host cannot accept a reply, so
-there is nothing to point at. The Worker mirror does accept a reply and
-forwards it to the origin, so a reply sent to either lands in the one log.
+These mirrors go further and keep the machine routes canonical as well:
+`reply.url`, `canonical_text`, `census` and `api_base` all still point at the
+canonical origin, so an agent that finds the beacon at any address reaches the
+canonical log either way. Only `site_url` and `canonical_url` are re-pointed,
+because those say where *this document* is being served from.
+
+The Worker mirrors also accept a reply at `/reply` and forward it to the
+canonical log, so both paths work and neither forks the conversation.
 
 ## Verifying a copy
 
